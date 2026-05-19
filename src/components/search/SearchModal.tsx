@@ -75,7 +75,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       />
 
       <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-4">
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search"
+          className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden"
+        >
           {/* Input */}
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100">
             <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />

@@ -1,8 +1,81 @@
 "use client";
 import { useCartStore } from "@/stores/cartStore";
+import { CartItem as CartItemType } from "@/types/cart";
 import { X, ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+
+interface CartItemProps {
+  item: CartItemType;
+  discountedPrice: number;
+  onDecrement: () => void;
+  onIncrement: () => void;
+  onRemove: () => void;
+}
+
+function CartItem({ item, discountedPrice, onDecrement, onIncrement, onRemove }: CartItemProps) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  return (
+    <div className="flex gap-3 bg-gray-50 rounded-xl p-3">
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-100">
+        {!imgLoaded && (
+          <div className="absolute inset-0 skeleton rounded-lg" />
+        )}
+        <Image
+          src={item.product.thumbnail}
+          alt={item.product.title}
+          fill
+          className={`object-contain p-1 transition-opacity duration-200 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+          sizes="64px"
+          onLoad={() => setImgLoaded(true)}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {item.product.title}
+        </p>
+        <p className="text-xs text-stone-500 mt-0.5">{item.product.brand}</p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-sm font-bold text-gray-900">
+            ${discountedPrice.toFixed(2)}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onDecrement}
+              aria-label={`Decrease quantity of ${item.product.title}`}
+              className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span
+              aria-label={`Quantity: ${item.quantity}`}
+              className="text-sm font-medium w-5 text-center"
+            >
+              {item.quantity}
+            </span>
+            <button
+              onClick={onIncrement}
+              aria-label={`Increase quantity of ${item.product.title}`}
+              disabled={item.quantity >= item.product.stock}
+              className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+            <button
+              onClick={onRemove}
+              aria-label={`Remove ${item.product.title} from cart`}
+              className="w-6 h-6 rounded-md bg-white border border-red-100 flex items-center justify-center hover:bg-red-50 transition-colors ml-1"
+            >
+              <Trash2 className="w-3 h-3 text-red-400" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function CartDrawer() {
   const {
@@ -22,7 +95,12 @@ export function CartDrawer() {
     <>
       <div onClick={closeCart} className="fixed inset-0 bg-black/30 z-50" />
 
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 flex flex-col shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
+        className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 flex flex-col shadow-2xl"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-gray-700" />
@@ -35,6 +113,7 @@ export function CartDrawer() {
           </div>
           <button
             onClick={closeCart}
+            aria-label="Close cart"
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -56,64 +135,21 @@ export function CartDrawer() {
           ) : (
             <div className="p-4 space-y-3">
               {items.map((item) => (
-                <div
+                <CartItem
                   key={item.product.id}
-                  className="flex gap-3 bg-gray-50 rounded-xl p-3"
-                >
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-100">
-                    <Image
-                      src={item.product.thumbnail}
-                      alt={item.product.title}
-                      fill
-                      className="object-contain p-1"
-                      sizes="64px"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.product.title}
-                    </p>
-                    <p className="text-xs text-stone-500 mt-0.5">
-                      {item.product.brand}
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-sm font-bold text-gray-900">
-                        $
-                        {discountedPrice(
-                          item.product.price,
-                          item.product.discountPercentage,
-                        ).toFixed(2)}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.product.id, item.quantity - 1)
-                          }
-                          className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-sm font-medium w-5 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.product.id, item.quantity + 1)
-                          }
-                          className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.product.id)}
-                          className="w-6 h-6 rounded-md bg-white border border-red-100 flex items-center justify-center hover:bg-red-50 transition-colors ml-1"
-                        >
-                          <Trash2 className="w-3 h-3 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  item={item}
+                  discountedPrice={discountedPrice(
+                    item.product.price,
+                    item.product.discountPercentage,
+                  )}
+                  onDecrement={() =>
+                    updateQuantity(item.product.id, item.quantity - 1)
+                  }
+                  onIncrement={() =>
+                    updateQuantity(item.product.id, item.quantity + 1)
+                  }
+                  onRemove={() => removeItem(item.product.id)}
+                />
               ))}
             </div>
           )}

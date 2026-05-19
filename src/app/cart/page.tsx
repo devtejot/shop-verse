@@ -1,5 +1,9 @@
 "use client";
 import { useCartStore } from "@/stores/cartStore";
+import { useProducts } from "@/hooks/useProducts";
+import { getFrequentlyBoughtTogether } from "@/lib/api";
+import { ProductCard } from "@/components/products/ProductCard";
+import { useMemo, useState } from "react";
 import {
   ShoppingCart,
   Plus,
@@ -7,6 +11,8 @@ import {
   Trash2,
   ArrowRight,
   Tag,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +26,17 @@ export default function CartPage() {
     totalItems,
     clearCart,
   } = useCartStore();
+  const { data } = useProducts();
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const fbtProducts = useMemo(
+    () =>
+      getFrequentlyBoughtTogether(
+        items.map((i) => i.product),
+        data?.products || [],
+      ),
+    [items, data],
+  );
 
   const discountedPrice = (price: number, discount: number) =>
     price * (1 - discount / 100);
@@ -140,12 +157,31 @@ export default function CartPage() {
             ))}
 
             <div className="flex gap-2">
-              <button
-                onClick={clearCart}
-                className="flex-1 text-sm text-red-400 hover:text-red-600 transition-colors"
-              >
-                <span>Clear cart</span>
-              </button>
+              {showClearConfirm ? (
+                <div className="flex-1 flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <span className="text-sm text-red-700 flex-1">Remove all items?</span>
+                  <button
+                    onClick={() => { clearCart(); setShowClearConfirm(false); }}
+                    className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    Yes, clear
+                  </button>
+                  <button
+                    onClick={() => setShowClearConfirm(false)}
+                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="flex-1 text-sm text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Clear cart
+                </button>
+              )}
             </div>
           </div>
 
@@ -209,6 +245,23 @@ export default function CartPage() {
                 Continue Shopping
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Frequently bought together */}
+      {items.length > 0 && fbtProducts.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900">
+              Frequently Bought Together
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {fbtProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </div>
       )}

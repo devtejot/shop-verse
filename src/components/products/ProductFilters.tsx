@@ -1,7 +1,7 @@
 "use client";
 import { ProductFilters as Filters } from "@/types/product";
 import { SlidersHorizontal, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface ProductFiltersProps {
   filters: Filters;
@@ -38,6 +38,16 @@ export function ProductFilters({
   onFiltersChange,
 }: ProductFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [customMin, setCustomMin] = useState("");
+  const [customMax, setCustomMax] = useState("");
+  const customMinRef = useRef<HTMLInputElement>(null);
+
+  function applyCustomRange() {
+    const min = customMin !== "" ? parseInt(customMin) : undefined;
+    const max = customMax !== "" ? parseInt(customMax) : undefined;
+    if ((min !== undefined && isNaN(min)) || (max !== undefined && isNaN(max))) return;
+    onFiltersChange({ ...filters, minPrice: min, maxPrice: max });
+  }
 
   const activeCount = [
     filters.category,
@@ -119,13 +129,11 @@ export function ProductFilters({
             return (
               <button
                 key={r.label}
-                onClick={() =>
-                  onFiltersChange({
-                    ...filters,
-                    minPrice: r.min,
-                    maxPrice: r.max,
-                  })
-                }
+                onClick={() => {
+                  setCustomMin("");
+                  setCustomMax("");
+                  onFiltersChange({ ...filters, minPrice: r.min, maxPrice: r.max });
+                }}
                 className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
                   active
                     ? "bg-gray-100 text-gray-900 font-medium"
@@ -136,6 +144,45 @@ export function ProductFilters({
               </button>
             );
           })}
+        </div>
+
+        {/* Custom range */}
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-2">Custom range</p>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+              <input
+                ref={customMinRef}
+                type="number"
+                min={0}
+                placeholder="Min"
+                value={customMin}
+                onChange={(e) => setCustomMin(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyCustomRange()}
+                className="w-full pl-5 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+            </div>
+            <span className="text-gray-300 text-xs">–</span>
+            <div className="relative flex-1">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+              <input
+                type="number"
+                min={0}
+                placeholder="Max"
+                value={customMax}
+                onChange={(e) => setCustomMax(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyCustomRange()}
+                className="w-full pl-5 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+            </div>
+            <button
+              onClick={applyCustomRange}
+              className="px-2 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap"
+            >
+              Go
+            </button>
+          </div>
         </div>
       </div>
 

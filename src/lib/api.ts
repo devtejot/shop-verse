@@ -79,6 +79,60 @@ export function personalizedSort(
   });
 }
 
+// Cross-category affinity map
+const CATEGORY_PAIRS: Record<string, string[]> = {
+  smartphones: ["tablets", "mens-watches"],
+  tablets: ["smartphones", "laptops", "mens-watches"],
+  laptops: ["tablets", "mens-bags", "mens-watches"],
+  "mens-watches": ["sunglasses", "mens-shirts", "mens-shoes"],
+  "womens-watches": ["womens-jewellery", "womens-bags", "sunglasses"],
+  beauty: ["skin-care", "fragrances"],
+  "skin-care": ["beauty", "fragrances"],
+  fragrances: ["skin-care", "beauty"],
+  "mens-shirts": ["mens-shoes", "sunglasses", "mens-watches"],
+  "womens-dresses": ["womens-shoes", "womens-bags", "womens-jewellery"],
+  "womens-shoes": ["womens-bags", "womens-dresses", "womens-jewellery"],
+  "mens-shoes": ["mens-shirts", "sunglasses", "mens-watches"],
+  "womens-bags": ["womens-shoes", "womens-jewellery"],
+  furniture: ["home-decoration", "kitchen-accessories"],
+  "home-decoration": ["furniture", "kitchen-accessories"],
+  "kitchen-accessories": ["furniture", "home-decoration", "groceries"],
+  groceries: ["kitchen-accessories"],
+  "sports-accessories": ["sunglasses", "mens-shoes"],
+  sunglasses: ["sports-accessories", "mens-shirts", "womens-dresses"],
+  automotive: ["motorcycle"],
+  motorcycle: ["automotive", "sports-accessories"],
+};
+
+export function getFrequentlyBoughtTogether(
+  cartProducts: Product[],
+  allProducts: Product[],
+  limit = 4,
+): Product[] {
+  if (cartProducts.length === 0 || allProducts.length === 0) return [];
+
+  const cartIds = new Set(cartProducts.map((p) => p.id));
+  const cartCategories = cartProducts.map((p) => p.category);
+
+  const targetCategories = new Set<string>();
+  for (const cat of cartCategories) {
+    for (const paired of CATEGORY_PAIRS[cat] || []) {
+      if (!cartCategories.includes(paired)) targetCategories.add(paired);
+    }
+  }
+
+  const candidates =
+    targetCategories.size > 0
+      ? allProducts.filter(
+          (p) => !cartIds.has(p.id) && targetCategories.has(p.category),
+        )
+      : allProducts.filter(
+          (p) => !cartIds.has(p.id) && cartCategories.includes(p.category),
+        );
+
+  return candidates.sort((a, b) => b.rating - a.rating).slice(0, limit);
+}
+
 export function applyFilters(
   products: Product[],
   filters: ProductFilters,

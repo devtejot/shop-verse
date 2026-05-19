@@ -15,6 +15,19 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 body {
   color: rgb(var(--foreground));
   background: rgb(var(--background));
@@ -44,14 +57,23 @@ body {
     @apply transition-smooth hover:shadow-lg hover:-translate-y-0.5;
   }
   .btn-primary {
-    @apply bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-smooth cursor-pointer;
+    @apply bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-smooth cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2;
   }
   .btn-secondary {
-    @apply bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 active:scale-95 transition-smooth cursor-pointer;
+    @apply bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 active:scale-95 transition-smooth cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2;
   }
   .badge {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
   }
+}
+
+/* Global focus-visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #374151;
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 @keyframes shimmer {

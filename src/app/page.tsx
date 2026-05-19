@@ -45,6 +45,11 @@ export default function HomePage() {
     return applyFilters(data.products, { sortBy: "discount" }).slice(0, 4);
   }, [data]);
 
+  const maxDiscount = useMemo(() => {
+    if (!topDeals.length) return 40;
+    return Math.round(Math.max(...topDeals.map((p) => p.discountPercentage)));
+  }, [topDeals]);
+
   const newArrivals = useMemo(() => {
     if (!data?.products) return [];
     return data.products.slice(-8).reverse();
@@ -173,7 +178,7 @@ export default function HomePage() {
                   Limited time
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Up to 40% off today
+                  Up to {maxDiscount}% off today
                 </h2>
                 <p className="text-gray-400 text-sm mt-1">
                   While supplies last

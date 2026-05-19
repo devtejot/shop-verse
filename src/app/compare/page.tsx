@@ -129,49 +129,114 @@ export default function ComparePage() {
 
           <tbody>
             {/* Fixed attributes */}
-            {[
-              {
-                label: "Price",
-                render: (p: (typeof items)[0]) =>
-                  `$${(p.price * (1 - p.discountPercentage / 100)).toFixed(2)}`,
-              },
-              {
-                label: "Original Price",
-                render: (p: (typeof items)[0]) => `$${p.price.toFixed(2)}`,
-              },
-              {
-                label: "Discount",
-                render: (p: (typeof items)[0]) =>
-                  `${Math.round(p.discountPercentage)}%`,
-              },
-              {
-                label: "Rating",
-                render: (p: (typeof items)[0]) => `${p.rating.toFixed(1)} / 5`,
-              },
-              {
-                label: "Stock",
-                render: (p: (typeof items)[0]) => `${p.stock} units`,
-              },
-              {
-                label: "Category",
-                render: (p: (typeof items)[0]) => p.category.replace(/-/g, " "),
-              },
-            ].map(({ label, render }) => (
-              <tr key={label} className="border-t border-gray-100">
-                <td className="py-3 pr-4 text-sm font-medium text-gray-500">
-                  {label}
-                </td>
-                {items.map((product) => (
-                  <td
-                    key={product.id}
-                    className="py-3 px-3 text-center text-sm text-gray-800"
-                    style={{ width: `${100 / (items.length || 1)}%` }}
-                  >
-                    {render(product)}
+            {(
+              [
+                {
+                  label: "Price",
+                  getValue: (p: (typeof items)[0]) =>
+                    p.price * (1 - p.discountPercentage / 100),
+                  render: (p: (typeof items)[0]) =>
+                    `$${(p.price * (1 - p.discountPercentage / 100)).toFixed(2)}`,
+                  lowerIsBetter: true,
+                },
+                {
+                  label: "Original Price",
+                  getValue: (p: (typeof items)[0]) => p.price,
+                  render: (p: (typeof items)[0]) => `$${p.price.toFixed(2)}`,
+                  lowerIsBetter: true,
+                },
+                {
+                  label: "Discount",
+                  getValue: (p: (typeof items)[0]) => p.discountPercentage,
+                  render: (p: (typeof items)[0]) =>
+                    `${Math.round(p.discountPercentage)}%`,
+                  lowerIsBetter: false,
+                },
+                {
+                  label: "Rating",
+                  getValue: (p: (typeof items)[0]) => p.rating,
+                  render: (p: (typeof items)[0]) => `${p.rating.toFixed(1)} / 5`,
+                  lowerIsBetter: false,
+                },
+                {
+                  label: "Stock",
+                  getValue: (p: (typeof items)[0]) => p.stock,
+                  render: (p: (typeof items)[0]) => `${p.stock} units`,
+                  lowerIsBetter: false,
+                },
+                {
+                  label: "Category",
+                  getValue: null,
+                  render: (p: (typeof items)[0]) =>
+                    p.category.replace(/-/g, " "),
+                  lowerIsBetter: null,
+                },
+              ] as {
+                label: string;
+                getValue: ((p: (typeof items)[0]) => number) | null;
+                render: (p: (typeof items)[0]) => string;
+                lowerIsBetter: boolean | null;
+              }[]
+            ).map(({ label, getValue, render, lowerIsBetter }) => {
+              const vals =
+                getValue && items.length > 1
+                  ? items.map((p) => getValue(p))
+                  : null;
+              const best = vals
+                ? lowerIsBetter
+                  ? Math.min(...vals)
+                  : Math.max(...vals)
+                : null;
+              const worst = vals
+                ? lowerIsBetter
+                  ? Math.max(...vals)
+                  : Math.min(...vals)
+                : null;
+
+              return (
+                <tr key={label} className="border-t border-gray-100">
+                  <td className="py-3 pr-4 text-sm font-medium text-gray-500">
+                    {label}
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {items.map((product) => {
+                    const val = getValue ? getValue(product) : null;
+                    const isBest = val !== null && val === best;
+                    const isWorst =
+                      val !== null && val === worst && best !== worst;
+                    return (
+                      <td
+                        key={product.id}
+                        className={`py-3 px-3 text-center text-sm ${
+                          isBest
+                            ? "text-green-700 font-semibold"
+                            : isWorst
+                              ? "text-red-500"
+                              : "text-gray-800"
+                        }`}
+                        style={{ width: `${100 / (items.length || 1)}%` }}
+                      >
+                        <span
+                          className={
+                            isBest
+                              ? "bg-green-50 px-2 py-0.5 rounded-full"
+                              : isWorst
+                                ? "bg-red-50 px-2 py-0.5 rounded-full"
+                                : ""
+                          }
+                        >
+                          {render(product)}
+                        </span>
+                        {isBest && items.length > 1 && (
+                          <span className="ml-1 text-xs text-green-600">
+                            ✓ Best
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
 
             {/* Dynamic specs with diff highlighting */}
             <tr>
@@ -190,6 +255,22 @@ export default function ComparePage() {
                   : null;
               });
 
+              // Try to extract numeric values for highlighting
+              const numericVals = rowValues.map((v) => {
+                if (!v) return null;
+                const n = parseFloat(v.replace(/[^0-9.]/g, ""));
+                return isNaN(n) ? null : n;
+              });
+              const allNumeric =
+                items.length > 1 && numericVals.every((v) => v !== null);
+              const numMax = allNumeric
+                ? Math.max(...(numericVals as number[]))
+                : null;
+              const numMin = allNumeric
+                ? Math.min(...(numericVals as number[]))
+                : null;
+              const valuesAreDifferent = numMax !== numMin;
+
               return (
                 <tr key={label} className="border-t border-gray-100">
                   <td className="py-3 pr-4 text-sm font-medium text-gray-500">
@@ -197,12 +278,37 @@ export default function ComparePage() {
                   </td>
                   {items.map((product, i) => {
                     const val = rowValues[i];
+                    const num = numericVals[i];
+                    const isBest =
+                      allNumeric && valuesAreDifferent && num === numMax;
+                    const isWorst =
+                      allNumeric && valuesAreDifferent && num === numMin;
                     return (
                       <td
                         key={product.id}
-                        className="py-3 px-3 text-center text-sm"
+                        className={`py-3 px-3 text-center text-sm ${
+                          isBest
+                            ? "text-green-700 font-semibold"
+                            : isWorst
+                              ? "text-red-500"
+                              : "text-gray-800"
+                        }`}
                       >
-                        {val || <span className="text-gray-300">—</span>}
+                        {val ? (
+                          <span
+                            className={
+                              isBest
+                                ? "bg-green-50 px-2 py-0.5 rounded-full"
+                                : isWorst
+                                  ? "bg-red-50 px-2 py-0.5 rounded-full"
+                                  : ""
+                            }
+                          >
+                            {val}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
                       </td>
                     );
                   })}

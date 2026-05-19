@@ -174,9 +174,11 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
           </div>
 
           {/* Quick actions */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
             <button
               onClick={handleWishlist}
+              aria-label={wishlisted ? `Remove ${product.title} from wishlist` : `Add ${product.title} to wishlist`}
+              aria-pressed={wishlisted}
               className={`w-8 h-8 rounded-full shadow-sm border flex items-center justify-center transition-colors ${wishlisted ? "bg-rose-500 border-rose-500 text-white" : "bg-white border-gray-200 text-gray-500 hover:text-rose-500"}`}
             >
               <Heart
@@ -187,6 +189,8 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
             <button
               onClick={handleCompare}
               disabled={!inCompare && isFull()}
+              aria-label={inCompare ? `Remove ${product.title} from compare` : `Add ${product.title} to compare`}
+              aria-pressed={inCompare}
               className={`w-8 h-8 rounded-full shadow-sm border flex items-center justify-center transition-colors ${inCompare ? "bg-gray-900 border-gray-900 text-white" : "bg-white border-gray-200 text-gray-500 hover:text-gray-900"} ${!inCompare && isFull() ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               <GitCompare className="w-4 h-4" />
@@ -217,6 +221,7 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
             </div>
             <button
               onClick={handleAddToCart}
+              aria-label={addedToCart ? `${product.title} added to cart` : `Add ${product.title} to cart`}
               className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${
                 addedToCart
                   ? "bg-green-500 text-white"
@@ -224,9 +229,9 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
               }`}
             >
               {addedToCart ? (
-                <span className="text-xs font-bold">✓</span>
+                <span className="text-xs font-bold" aria-hidden="true">✓</span>
               ) : (
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCart className="w-4 h-4" aria-hidden="true" />
               )}
             </button>
           </div>
